@@ -350,6 +350,9 @@ func ValidateDuration(crt *internalcmapi.CertificateSpec, fldPath *field.Path) f
 			el = append(el, field.Invalid(fldPath.Child("renewBeforePercentage"), *crt.RenewBeforePercentage, "certificate renewBeforePercentage must result in a renewBefore less than duration"))
 		}
 	}
+	if crt.RenewTimeWindow != "" {
+
+	}
 
 	return el
 }
