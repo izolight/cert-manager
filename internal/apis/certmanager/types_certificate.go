@@ -155,8 +155,8 @@ type CertificateSpec struct {
 	RenewBefore *metav1.Duration
 
 	// The window in which certificate renewals are done.
-	// If set to a valid cron expression the RenewalTime will be set to the latest date matching the expression,
-	// but no later than the RenewBefore, respective RenewBeforePercentage.
+	// If set to a valid cron expression the RenewalTime will be set to the next date matching the expression,
+	// following RenewBefore, respective RenewBeforePercentage.
 	// +optional
 	RenewTimeWindow string `json:"renewTimeWindow,omitempty"`
 
