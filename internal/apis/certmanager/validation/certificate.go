@@ -43,7 +43,7 @@ import (
 
 // Validation functions for cert-manager Certificate types
 
-func ValidateCertificateSpec(crt *internalcmapi.CertificateSpec, fldPath *field.Path) field.ErrorList {
+func ValidateCertificateSpec(crt *internalcmapi.CertificateSpec, fldPath *field.Path, notAfter time.Time) field.ErrorList {
 	el := field.ErrorList{}
 	if crt.SecretName == "" {
 		el = append(el, field.Required(fldPath.Child("secretName"), "must be specified"))
@@ -206,13 +206,14 @@ func ValidateCertificateSpec(crt *internalcmapi.CertificateSpec, fldPath *field.
 
 func ValidateCertificate(a *admissionv1.AdmissionRequest, obj runtime.Object) (field.ErrorList, []string) {
 	crt := obj.(*internalcmapi.Certificate)
-	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"))
+	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"), time.Now().Add(crt.Spec.Duration.Duration))
 	return allErrs, nil
 }
 
 func ValidateUpdateCertificate(a *admissionv1.AdmissionRequest, oldObj, obj runtime.Object) (field.ErrorList, []string) {
 	crt := obj.(*internalcmapi.Certificate)
-	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"))
+	// TODO: determine if changes require re-issuance, which means a new notAfter
+	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"), crt.Status.NotAfter.Time)
 	return allErrs, nil
 }
 
@@ -320,7 +321,7 @@ func validateSecretTemplateAnnotations(crt *internalcmapi.CertificateSpec, fldPa
 	return el
 }
 
-func ValidateDuration(crt *internalcmapi.CertificateSpec, fldPath *field.Path) field.ErrorList {
+func ValidateDuration(crt *internalcmapi.CertificateSpec, fldPath *field.Path, notAfter time.Time) field.ErrorList {
 	el := field.ErrorList{}
 
 	duration := util.DefaultCertDuration(crt.Duration)
