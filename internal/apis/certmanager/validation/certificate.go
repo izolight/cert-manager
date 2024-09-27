@@ -203,7 +203,13 @@ func ValidateCertificateSpec(crt *internalcmapi.CertificateSpec, fldPath *field.
 
 func ValidateCertificate(a *admissionv1.AdmissionRequest, obj runtime.Object) (field.ErrorList, []string) {
 	crt := obj.(*internalcmapi.Certificate)
-	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"), time.Now().Add(crt.Spec.Duration.Duration))
+	notAfter := time.Now()
+	if crt.Spec.Duration != nil {
+		notAfter = notAfter.Add(cmapi.DefaultCertificateDuration)
+	} else {
+		notAfter = notAfter.Add(crt.Spec.Duration.Duration)
+	}
+	allErrs := ValidateCertificateSpec(&crt.Spec, field.NewPath("spec"), notAfter)
 	return allErrs, nil
 }
 
