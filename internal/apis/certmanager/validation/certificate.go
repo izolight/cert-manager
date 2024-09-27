@@ -204,7 +204,7 @@ func ValidateCertificateSpec(crt *internalcmapi.CertificateSpec, fldPath *field.
 func ValidateCertificate(a *admissionv1.AdmissionRequest, obj runtime.Object) (field.ErrorList, []string) {
 	crt := obj.(*internalcmapi.Certificate)
 	notAfter := time.Now()
-	if crt.Spec.Duration != nil {
+	if crt.Spec.Duration == nil {
 		notAfter = notAfter.Add(cmapi.DefaultCertificateDuration)
 	} else {
 		notAfter = notAfter.Add(crt.Spec.Duration.Duration)
@@ -346,10 +346,14 @@ func ValidateDuration(crt *internalcmapi.CertificateSpec, fldPath *field.Path, n
 	if crt.RenewBefore != nil && crt.RenewBefore.Duration >= duration {
 		el = append(el, field.Invalid(fldPath.Child("renewBefore"), crt.RenewBefore.Duration, fmt.Sprintf("certificate duration %s must be greater than renewBefore %s", duration, crt.RenewBefore.Duration)))
 	}
+	var renewBefore time.Duration
+	if crt.RenewBefore != nil {
+		renewBefore = crt.RenewBefore.Duration
+	}
 
 	// If spec.renewBeforePercentage is set, check that it's within the allowed
 	// range.
-	var renewBefore = crt.RenewBefore.Duration
+
 	if crt.RenewBeforePercentage != nil {
 		renewBefore = duration * time.Duration(100-*crt.RenewBeforePercentage) / 100
 		if renewBefore < cmapi.MinimumRenewBefore {
