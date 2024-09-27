@@ -785,8 +785,9 @@ func TestValidateDuration(t *testing.T) {
 
 	fldPath := field.NewPath("spec")
 	scenarios := map[string]struct {
-		cfg  *internalcmapi.Certificate
-		errs []*field.Error
+		cfg      *internalcmapi.Certificate
+		errs     []*field.Error
+		notAfter time.Time
 	}{
 		"default duration and renewBefore": {
 			cfg: &internalcmapi.Certificate{
@@ -932,10 +933,20 @@ func TestValidateDuration(t *testing.T) {
 			},
 			errs: []*field.Error{field.Invalid(fldPath.Child("duration"), usefulDurations["half hour"].Duration, fmt.Sprintf("certificate duration must be greater than %s", cmapi.MinimumCertificateDuration))},
 		},
+		"renewWindow only from 06:00-07:00": {
+			cfg: &internalcmapi.Certificate{
+				Spec: internalcmapi.CertificateSpec{},
+			},
+			notAfter: time.Now(),
+		},
 	}
 	for n, s := range scenarios {
 		t.Run(n, func(t *testing.T) {
-			errs := ValidateDuration(&s.cfg.Spec, fldPath, time.Now())
+			notAfter := time.Now()
+			if !s.notAfter.IsZero() {
+				notAfter = s.notAfter
+			}
+			errs := ValidateDuration(&s.cfg.Spec, fldPath, notAfter)
 			assert.ElementsMatch(t, errs, s.errs)
 		})
 	}
