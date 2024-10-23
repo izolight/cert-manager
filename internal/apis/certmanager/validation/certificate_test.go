@@ -933,18 +933,32 @@ func TestValidateDuration(t *testing.T) {
 			},
 			errs: []*field.Error{field.Invalid(fldPath.Child("duration"), usefulDurations["half hour"].Duration, fmt.Sprintf("certificate duration must be greater than %s", cmapi.MinimumCertificateDuration))},
 		},
-		"renewWindow only from 06:00-07:00": {
+		"renewWindow only from 06:00-06:59, works": {
 			cfg: &internalcmapi.Certificate{
 				Spec: internalcmapi.CertificateSpec{
 					Duration:              usefulDurations["one day"],
-					RenewBeforePercentage: ptr.To(int32(95)),
+					RenewBefore: usefulDurations["one hour"],
 					CommonName:            "testcn",
 					SecretName:            "abc",
 					IssuerRef:             validIssuerRef,
 					RenewTimeWindow: "* 6 * * *",
 				},
 			},
-			notAfter: time.Now(),
+			notAfter: time.Date(2025,01,01,7,0,0,0,time.UTC),
+		},
+		"renewWindow only from 06:00-06:59, does not work": {
+			cfg: &internalcmapi.Certificate{
+				Spec: internalcmapi.CertificateSpec{
+					Duration:              usefulDurations["one day"],
+					RenewBefore: usefulDurations["one hour"],
+					CommonName:            "testcn",
+					SecretName:            "abc",
+					IssuerRef:             validIssuerRef,
+					RenewTimeWindow: "* 6 * * *",
+				},
+			},
+			notAfter: time.Date(2025,01,01,8,0,0,0,time.UTC),
+			errs: []*field.Error{field.Invalid(fldPath.Child("renewTimeWindow"), "* 6 * * *", "next renewTime 2025-01-02 06:00:00 +0000 UTC that fits window * 6 * * * and renewBefore 1h0m0s is after 2025-01-01 08:00:00 +0000 UTC")},
 		},
 	}
 	for n, s := range scenarios {
