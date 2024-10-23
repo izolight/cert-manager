@@ -935,7 +935,14 @@ func TestValidateDuration(t *testing.T) {
 		},
 		"renewWindow only from 06:00-07:00": {
 			cfg: &internalcmapi.Certificate{
-				Spec: internalcmapi.CertificateSpec{},
+				Spec: internalcmapi.CertificateSpec{
+					Duration:              usefulDurations["one day"],
+					RenewBeforePercentage: ptr.To(int32(95)),
+					CommonName:            "testcn",
+					SecretName:            "abc",
+					IssuerRef:             validIssuerRef,
+					RenewTimeWindow: "* 6 * * *",
+				},
 			},
 			notAfter: time.Now(),
 		},
