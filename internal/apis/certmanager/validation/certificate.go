@@ -366,7 +366,7 @@ func ValidateDuration(crt *internalcmapi.CertificateSpec, fldPath *field.Path, n
 	if crt.RenewTimeWindow != "" {
 		expr, err := cronexpr.Parse(crt.RenewTimeWindow)
 		if err != nil {
-			el = append(el, field.Invalid(fldPath.Child("renewTimeWindow"), crt.RenewTimeWindow, fmt.Sprintf("renewTimeWindow is not a valid cron expression: %v", err)))
+			return append(el, field.Invalid(fldPath.Child("renewTimeWindow"), crt.RenewTimeWindow, fmt.Sprintf("renewTimeWindow is not a valid cron expression: %v", err)))
 		}
 		renewTime := expr.Next(notAfter.Add(-renewBefore))
 		if renewTime.After(notAfter) {

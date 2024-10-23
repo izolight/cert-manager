@@ -933,6 +933,19 @@ func TestValidateDuration(t *testing.T) {
 			},
 			errs: []*field.Error{field.Invalid(fldPath.Child("duration"), usefulDurations["half hour"].Duration, fmt.Sprintf("certificate duration must be greater than %s", cmapi.MinimumCertificateDuration))},
 		},
+		"invalid renewWindow": {
+			cfg: &internalcmapi.Certificate{
+				Spec: internalcmapi.CertificateSpec{
+					Duration:              usefulDurations["one day"],
+					RenewBefore: usefulDurations["one hour"],
+					CommonName:            "testcn",
+					SecretName:            "abc",
+					IssuerRef:             validIssuerRef,
+					RenewTimeWindow: "not a cron expression",
+				},
+			},
+			errs: []*field.Error{field.Invalid(fldPath.Child("renewTimeWindow"), "not a cron expression", "renewTimeWindow is not a valid cron expression: missing field(s)")},
+		},
 		"renewWindow only from 06:00-06:59, works": {
 			cfg: &internalcmapi.Certificate{
 				Spec: internalcmapi.CertificateSpec{
